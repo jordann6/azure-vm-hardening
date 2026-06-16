@@ -1,0 +1,17 @@
+# Copy to terraform.tfvars and fill in. terraform.tfvars is gitignored.
+
+# Your public IP in CIDR form. The only source the NSG allows to reach SSH.
+# Find it with: curl -s ifconfig.me
+admin_source_cidr = "203.0.113.4/32"
+
+# Optional overrides:
+# location           = "eastus"
+# vm_size            = "Standard_B1s"
+# enable_public_ip   = true
+# ssh_public_key_path = "~/.ssh/id_ed25519.pub"
+
+# To drop the jump host into a live Z1 hub instead of a self-contained one:
+# use_existing_hub                = true
+# existing_hub_vnet_name          = "vnet-alz-hub"
+# existing_hub_resource_group     = "rg-alz-hub"
+# existing_management_subnet_name = "snet-management"

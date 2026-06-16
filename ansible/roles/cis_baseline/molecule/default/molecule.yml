@@ -1,0 +1,25 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: cis-baseline-ubuntu2204
+    # systemd-enabled image so service modules behave like a real host
+    image: geerlingguy/docker-ubuntu2204-ansible:latest
+    command: /usr/sbin/init
+    privileged: true
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    pre_build_image: true
+provisioner:
+  name: ansible
+  inventory:
+    host_vars:
+      cis-baseline-ubuntu2204:
+        # Containers cannot apply kernel sysctl or load audit rules; verify the
+        # written config instead. The Packer bake is the real runtime test.
+        harden_apply_runtime: false
+verifier:
+  name: ansible

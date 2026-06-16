@@ -1,0 +1,16 @@
+---
+- name: Blacklist unused filesystem modules
+  ansible.builtin.template:
+    src: blacklist-filesystems.conf.j2
+    dest: /etc/modprobe.d/60-blacklist-filesystems.conf
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Unload blacklisted modules if currently loaded
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ blacklisted_filesystems }}"
+  when: harden_apply_runtime
+  failed_when: false

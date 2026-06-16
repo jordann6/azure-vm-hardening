@@ -1,0 +1,30 @@
+---
+- name: Include sshd hardening
+  ansible.builtin.import_tasks: sshd.yml
+  when: harden_sshd
+  tags: [sshd]
+
+- name: Include auditd hardening
+  ansible.builtin.import_tasks: auditd.yml
+  when: harden_auditd
+  tags: [auditd]
+
+- name: Include fail2ban hardening
+  ansible.builtin.import_tasks: fail2ban.yml
+  when: harden_fail2ban
+  tags: [fail2ban]
+
+- name: Include sysctl hardening
+  ansible.builtin.import_tasks: sysctl.yml
+  when: harden_sysctl
+  tags: [sysctl]
+
+- name: Include pam and password policy
+  ansible.builtin.import_tasks: pam.yml
+  when: harden_pam
+  tags: [pam]
+
+- name: Include filesystem module hardening
+  ansible.builtin.import_tasks: filesystem.yml
+  when: harden_filesystem
+  tags: [filesystem]

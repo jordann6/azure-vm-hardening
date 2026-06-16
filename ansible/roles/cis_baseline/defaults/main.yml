@@ -1,0 +1,51 @@
+---
+# cis_baseline role defaults
+# Every control is toggleable so the role stays reusable across hosts.
+
+# When false, the role writes config files but skips steps that touch the live
+# kernel or services (sysctl --system, service restarts). Molecule sets this
+# false so the role can be verified inside a container; the Packer bake and the
+# real jump host both run with it true.
+harden_apply_runtime: true
+
+# --- sshd ---
+harden_sshd: true
+sshd_permit_root_login: "no"
+sshd_password_authentication: "no"
+sshd_max_auth_tries: 4
+sshd_login_grace_time: 30
+sshd_client_alive_interval: 300
+sshd_client_alive_count_max: 2
+sshd_ciphers: "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com"
+sshd_macs: "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com"
+sshd_kex: "curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group16-sha512"
+
+# --- auditd ---
+harden_auditd: true
+
+# --- fail2ban ---
+harden_fail2ban: true
+fail2ban_bantime: 3600
+fail2ban_findtime: 600
+fail2ban_maxretry: 5
+
+# --- sysctl ---
+harden_sysctl: true
+
+# --- pam / password policy ---
+harden_pam: true
+pam_minlen: 14
+pam_pass_max_days: 90
+pam_pass_min_days: 1
+pam_pass_warn_age: 7
+login_umask: "027"
+
+# --- filesystem modules ---
+harden_filesystem: true
+blacklisted_filesystems:
+  - cramfs
+  - freevxfs
+  - jffs2
+  - hfs
+  - hfsplus
+  - udf

@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  role_name: cis_baseline
+  author: jordann6
+  description: CIS-style hardening baseline for Ubuntu 22.04 (sshd, auditd, fail2ban, sysctl, PAM, filesystem modules)
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+  galaxy_tags:
+    - hardening
+    - security
+    - cis
+    - ubuntu
+
+dependencies: []

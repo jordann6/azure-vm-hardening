@@ -1,0 +1,33 @@
+name: molecule
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Molecule and Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install "ansible-core>=2.16" "molecule>=6.0" "molecule-plugins[docker]" ansible-lint
+
+      - name: Install role collections
+        run: ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Lint the role
+        run: ansible-lint ansible/roles/cis_baseline
+
+      - name: Molecule test
+        working-directory: ansible/roles/cis_baseline
+        run: molecule test

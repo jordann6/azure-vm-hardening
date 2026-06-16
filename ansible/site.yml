@@ -1,0 +1,7 @@
+---
+# Entry playbook used by the Packer ansible provisioner during the image bake.
+- name: Apply CIS-style hardening baseline
+  hosts: all
+  become: true
+  roles:
+    - cis_baseline

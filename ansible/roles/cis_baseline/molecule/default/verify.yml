@@ -1,0 +1,46 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Read hardened sshd config
+      ansible.builtin.slurp:
+        src: /etc/ssh/sshd_config.d/60-hardening.conf
+      register: sshd_conf
+
+    - name: Assert sshd hardening is in place
+      ansible.builtin.assert:
+        that:
+          - "'PermitRootLogin no' in (sshd_conf.content | b64decode)"
+          - "'PasswordAuthentication no' in (sshd_conf.content | b64decode)"
+          - "'X11Forwarding no' in (sshd_conf.content | b64decode)"
+        fail_msg: sshd hardening directives missing
+
+    - name: Stat the key managed files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: managed_files
+      loop:
+        - /etc/audit/rules.d/60-hardening.rules
+        - /etc/fail2ban/jail.local
+        - /etc/sysctl.d/99-hardening.conf
+        - /etc/modprobe.d/60-blacklist-filesystems.conf
+
+    - name: Assert every managed file exists
+      ansible.builtin.assert:
+        that: item.stat.exists
+        fail_msg: "Expected hardening file missing: {{ item.item }}"
+      loop: "{{ managed_files.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Read pwquality config
+      ansible.builtin.slurp:
+        src: /etc/security/pwquality.conf
+      register: pwq
+
+    - name: Assert password length policy
+      ansible.builtin.assert:
+        that:
+          - "'minlen = 14' in (pwq.content | b64decode)"
+        fail_msg: pwquality minlen not enforced

@@ -1,0 +1,5 @@
+# Managed by Ansible (cis_baseline role).
+{% for fs in blacklisted_filesystems %}
+install {{ fs }} /bin/true
+blacklist {{ fs }}
+{% endfor %}
