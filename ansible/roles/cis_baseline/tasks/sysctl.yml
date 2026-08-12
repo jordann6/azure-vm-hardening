@@ -10,5 +10,5 @@
 
 - name: Apply sysctl settings now
   ansible.builtin.command: sysctl --system
-  when: harden_apply_runtime
+  when: cis_baseline_apply_runtime
   changed_when: false

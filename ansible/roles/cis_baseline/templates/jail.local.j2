@@ -1,8 +1,8 @@
 # Managed by Ansible (cis_baseline role).
 [DEFAULT]
-bantime  = {{ fail2ban_bantime }}
-findtime = {{ fail2ban_findtime }}
-maxretry = {{ fail2ban_maxretry }}
+bantime  = {{ cis_baseline_fail2ban_bantime }}
+findtime = {{ cis_baseline_fail2ban_findtime }}
+maxretry = {{ cis_baseline_fail2ban_maxretry }}
 backend  = systemd
 
 [sshd]

@@ -16,3 +16,6 @@ galaxy_info:
     - ubuntu
 
 dependencies: []
+
+collections:
+  - community.general

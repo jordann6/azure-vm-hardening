@@ -19,4 +19,4 @@
     name: fail2ban
     state: started
     enabled: true
-  when: harden_apply_runtime
+  when: cis_baseline_apply_runtime

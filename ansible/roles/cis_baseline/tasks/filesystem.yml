@@ -11,6 +11,6 @@
   community.general.modprobe:
     name: "{{ item }}"
     state: absent
-  loop: "{{ blacklisted_filesystems }}"
-  when: harden_apply_runtime
+  loop: "{{ cis_baseline_blacklisted_filesystems }}"
+  when: cis_baseline_apply_runtime
   failed_when: false

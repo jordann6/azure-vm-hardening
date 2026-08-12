@@ -3,21 +3,21 @@
   ansible.builtin.service:
     name: ssh
     state: restarted
-  when: harden_apply_runtime
+  when: cis_baseline_apply_runtime
 
 - name: Restart auditd
-  # auditd does not support the standard systemd restart cleanly; use service tooling.
-  ansible.builtin.command: service auditd restart
-  when: harden_apply_runtime
-  changed_when: true
+  ansible.builtin.service:
+    name: auditd
+    state: restarted
+  when: cis_baseline_apply_runtime
 
 - name: Restart fail2ban
   ansible.builtin.service:
     name: fail2ban
     state: restarted
-  when: harden_apply_runtime
+  when: cis_baseline_apply_runtime
 
 - name: Reload sysctl
-  ansible.builtin.command: sysctl --system
-  when: harden_apply_runtime
+  ansible.builtin.command: sysctl --system  # noqa: command-instead-of-module
+  when: cis_baseline_apply_runtime
   changed_when: false

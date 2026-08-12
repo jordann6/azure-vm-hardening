@@ -20,6 +20,6 @@ provisioner:
       cis-baseline-ubuntu2204:
         # Containers cannot apply kernel sysctl or load audit rules; verify the
         # written config instead. The Packer bake is the real runtime test.
-        harden_apply_runtime: false
+        cis_baseline_apply_runtime: false
 verifier:
   name: ansible

@@ -27,6 +27,8 @@ jobs:
 
       - name: Lint the role
         run: ansible-lint ansible/roles/cis_baseline
+        env:
+          ANSIBLE_ROLES_PATH: ansible/roles
 
       - name: Molecule test
         working-directory: ansible/roles/cis_baseline

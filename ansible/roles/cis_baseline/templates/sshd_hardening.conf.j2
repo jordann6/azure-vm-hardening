@@ -1,16 +1,16 @@
 # Managed by Ansible (cis_baseline role). Do not edit by hand.
-PermitRootLogin {{ sshd_permit_root_login }}
-PasswordAuthentication {{ sshd_password_authentication }}
+PermitRootLogin {{ cis_baseline_sshd_permit_root_login }}
+PasswordAuthentication {{ cis_baseline_sshd_password_authentication }}
 PermitEmptyPasswords no
 ChallengeResponseAuthentication no
 KbdInteractiveAuthentication no
-MaxAuthTries {{ sshd_max_auth_tries }}
-LoginGraceTime {{ sshd_login_grace_time }}
-ClientAliveInterval {{ sshd_client_alive_interval }}
-ClientAliveCountMax {{ sshd_client_alive_count_max }}
+MaxAuthTries {{ cis_baseline_sshd_max_auth_tries }}
+LoginGraceTime {{ cis_baseline_sshd_login_grace_time }}
+ClientAliveInterval {{ cis_baseline_sshd_client_alive_interval }}
+ClientAliveCountMax {{ cis_baseline_sshd_client_alive_count_max }}
 X11Forwarding no
 AllowAgentForwarding no
 AllowTcpForwarding no
-Ciphers {{ sshd_ciphers }}
-MACs {{ sshd_macs }}
-KexAlgorithms {{ sshd_kex }}
+Ciphers {{ cis_baseline_sshd_ciphers }}
+MACs {{ cis_baseline_sshd_macs }}
+KexAlgorithms {{ cis_baseline_sshd_kex }}

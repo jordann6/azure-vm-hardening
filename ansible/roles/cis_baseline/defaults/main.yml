@@ -6,43 +6,43 @@
 # kernel or services (sysctl --system, service restarts). Molecule sets this
 # false so the role can be verified inside a container; the Packer bake and the
 # real jump host both run with it true.
-harden_apply_runtime: true
+cis_baseline_apply_runtime: true
 
 # --- sshd ---
-harden_sshd: true
-sshd_permit_root_login: "no"
-sshd_password_authentication: "no"
-sshd_max_auth_tries: 4
-sshd_login_grace_time: 30
-sshd_client_alive_interval: 300
-sshd_client_alive_count_max: 2
-sshd_ciphers: "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com"
-sshd_macs: "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com"
-sshd_kex: "curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group16-sha512"
+cis_baseline_harden_sshd: true
+cis_baseline_sshd_permit_root_login: "no"
+cis_baseline_sshd_password_authentication: "no"
+cis_baseline_sshd_max_auth_tries: 4
+cis_baseline_sshd_login_grace_time: 30
+cis_baseline_sshd_client_alive_interval: 300
+cis_baseline_sshd_client_alive_count_max: 2
+cis_baseline_sshd_ciphers: "chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com"
+cis_baseline_sshd_macs: "hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com"
+cis_baseline_sshd_kex: "curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group16-sha512"
 
 # --- auditd ---
-harden_auditd: true
+cis_baseline_harden_auditd: true
 
 # --- fail2ban ---
-harden_fail2ban: true
-fail2ban_bantime: 3600
-fail2ban_findtime: 600
-fail2ban_maxretry: 5
+cis_baseline_harden_fail2ban: true
+cis_baseline_fail2ban_bantime: 3600
+cis_baseline_fail2ban_findtime: 600
+cis_baseline_fail2ban_maxretry: 5
 
 # --- sysctl ---
-harden_sysctl: true
+cis_baseline_harden_sysctl: true
 
 # --- pam / password policy ---
-harden_pam: true
-pam_minlen: 14
-pam_pass_max_days: 90
-pam_pass_min_days: 1
-pam_pass_warn_age: 7
-login_umask: "027"
+cis_baseline_harden_pam: true
+cis_baseline_pam_minlen: 14
+cis_baseline_pam_pass_max_days: 90
+cis_baseline_pam_pass_min_days: 1
+cis_baseline_pam_pass_warn_age: 7
+cis_baseline_login_umask: "027"
 
 # --- filesystem modules ---
-harden_filesystem: true
-blacklisted_filesystems:
+cis_baseline_harden_filesystem: true
+cis_baseline_blacklisted_filesystems:
   - cramfs
   - freevxfs
   - jffs2
