@@ -8,3 +8,11 @@
         name: openssh-server
         state: present
         update_cache: true
+
+    - name: Create sshd privilege separation directory
+      ansible.builtin.file:
+        path: /run/sshd
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
