@@ -1,0 +1,10 @@
+---
+- name: Prepare
+  hosts: all
+  become: true
+  tasks:
+    - name: Install openssh-server for sshd config validation
+      ansible.builtin.apt:
+        name: openssh-server
+        state: present
+        update_cache: true
