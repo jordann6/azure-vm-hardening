@@ -1,4 +1,12 @@
 ---
+- name: Ensure sshd_config.d directory exists
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
 - name: Drop hardened sshd config into sshd_config.d
   ansible.builtin.template:
     src: sshd_hardening.conf.j2
