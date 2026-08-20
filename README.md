@@ -101,6 +101,96 @@ cd terraform && terraform destroy
 - **Total deploy-demo-destroy, same day: under ~$1.**
 - Teardown risk: the managed image is not part of the jump-host Terraform state, so `terraform destroy` leaves it behind. `scripts/destroy-image.sh` removes it. If you set `use_existing_hub = true`, remember the Z1 landing zone is a separate destroy.
 
+## Palo Alto VM-Series perimeter (opt-in)
+
+The base project hardens the guest OS. This layer adds the network half of
+defense-in-depth: a **Palo Alto VM-Series** next-generation firewall in front of
+the jump host, with the subnet NSG kept behind it as a second control. It is
+gated on `enable_firewall` (default `false`) so the base deploy stays cheap, and
+it targets the self-contained hub only (`use_existing_hub = false`).
+
+```
+Internet
+   |
+ untrust NIC (public IP)
+   |
+ [ Palo Alto VM-Series ]  <- mgmt NIC (public IP) for the console/API
+   |
+ trust NIC (10.0.6.4)
+   |
+ snet-management  <- default route 0.0.0.0/0 forced to the trust IP (UDR)
+   |
+ hardened jump host  (NSG still applied underneath)
+```
+
+The jump host's default route is a user-defined route whose next hop is the
+firewall trust interface, so all egress is inspected. That is the "vendor
+firewall plus cloud-native control" pattern enterprises actually run.
+
+### Deploy the firewall
+
+VM-Series is a marketplace image, so accept its terms once per subscription. The
+default SKU is `byol-gen2` (a Gen2 image, required by modern Gen2-only VM sizes):
+
+```bash
+az vm image terms accept --publisher paloaltonetworks --offer vmseries-flex --plan byol-gen2
+```
+
+Then apply with the firewall enabled:
+
+```bash
+cd terraform
+terraform apply \
+  -var enable_firewall=true \
+  -var firewall_admin_password='<StrongPassw0rd!>'
+# outputs: firewall_mgmt_ip, firewall_untrust_ip, firewall_console
+```
+
+Sizing note: the VM-Series needs 4+ vCPU **and** 3 NICs (mgmt, untrust, trust).
+A 4-vCPU size only allows 2 NICs, so the default is `Standard_D8as_v7` (8 vCPU,
+Gen2, 4 NICs). Confirm your region and subscription both have capacity and
+regional-vCPU quota for it, or override `firewall_vm_size` with a PAN-supported
+size that does.
+
+### Configure the policy as code
+
+The appliance is not up during the infra apply, so its security posture lives in
+a separate root module (`terraform-panos/`) that runs against the booted
+firewall with the official `panos` provider. It sets trust/untrust zones and a
+least-privilege egress policy (allow DNS and updates, deny the rest, log both):
+
+```bash
+cd terraform-panos
+export PANOS_HOSTNAME=<firewall_mgmt_ip>
+export PANOS_USERNAME=admin
+export PANOS_PASSWORD=<your-admin-password>
+terraform init && terraform apply
+```
+
+### Firewall cost
+
+The default `Standard_D8as_v7` (8 vCPU) runs roughly $0.35/hour, plus PAYG
+bundle licensing if you swap `byol-gen2` for a `bundle*` SKU. Keep it to a short
+deploy-demo-destroy window. `terraform destroy` removes the firewall, its NICs,
+public IPs, route table, and the added subnets along with the rest.
+
+### Validated live
+
+Deployed and verified end to end on Azure (eastus): the CIS golden image was
+baked with Packer, the jump host booted from it into `snet-management`, and the
+VM-Series came up as `Standard_D8as_v7` with all three interfaces
+(mgmt/untrust/trust). The jump host's route table confirmed the default route
+`0.0.0.0/0 -> 10.0.6.4` (VirtualAppliance, the firewall trust IP), so egress is
+forced through the firewall. Torn down clean afterward.
+
+Two gotchas surfaced and are now baked into the config:
+
+- **SSH key must be RSA.** The managed-image VM path rejects `ssh-ed25519`
+  ("Only RSA SSH keys are supported"). Generate an RSA key and point
+  `ssh_public_key_path` at it: `ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_vmlab`.
+- **Image generation must match the VM size.** The Gen1 `byol` image will not
+  boot on Gen2-only sizes (the `D*_v6/v7` families); use `byol-gen2` there.
+
 ## Hardening notes (production deltas)
 
 - For zero-public-IP access, deploy the **Azure Bastion** service into `AzureBastionSubnet` and set `enable_public_ip = false`. Skipped here because Bastion runs about $4.50/day, which does not suit a deploy-demo-destroy budget.

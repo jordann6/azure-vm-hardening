@@ -77,3 +77,40 @@ variable "tags" {
     owner   = "jordan"
   }
 }
+
+# --- Palo Alto VM-Series perimeter (opt-in) ---
+variable "enable_firewall" {
+  type        = bool
+  default     = false
+  description = "Deploy a Palo Alto VM-Series in front of the jump host. Only takes effect on the self-contained hub (use_existing_hub = false). Adds real cost, so it is off by default."
+}
+
+variable "firewall_vm_size" {
+  type        = string
+  default     = "Standard_D8as_v7"
+  description = "VM-Series needs 4+ vCPU AND 3 NICs (mgmt/untrust/trust); a 4-vCPU size only allows 2 NICs, so an 8-vCPU size is required. Older PAN-listed sizes (D3_v2, DS3_v2) are quota/capacity-restricted on many subs; D8as_v7 (Gen2, 4 NICs) is broadly available. Override if PAN pins you to a specific SKU."
+}
+
+variable "firewall_image_sku" {
+  type        = string
+  default     = "byol-gen2"
+  description = "Marketplace SKU for the paloaltonetworks/vmseries-flex offer. byol-gen2 is a Gen2 image, required by modern Gen2-only VM sizes (D*_v6). Use byol/bundle1/bundle2 for Gen1 sizes. Accept image terms first: az vm image terms accept."
+}
+
+variable "firewall_trust_ip" {
+  type        = string
+  default     = "10.0.6.4"
+  description = "Static private IP of the firewall trust NIC. Used as the next hop for the jump host's default route."
+}
+
+variable "firewall_admin_username" {
+  type    = string
+  default = "paadmin"
+}
+
+variable "firewall_admin_password" {
+  type        = string
+  default     = null
+  sensitive   = true
+  description = "Bootstrap admin password for the VM-Series. Required only when enable_firewall = true."
+}
