@@ -4,6 +4,8 @@ An immutable golden-image pipeline that bakes a CIS-style hardening baseline int
 
 This fills the VM config-management gap in an otherwise serverless and Kubernetes portfolio. The toolchain is **Packer + Ansible + Molecule**; **Terraform** still owns every cloud resource and Ansible does in-OS configuration only, keeping the boundary clean.
 
+An opt-in **Palo Alto VM-Series perimeter** adds the network half of defense-in-depth in front of the jump host, and anchors a multi-vendor "firewall as code" theme that also spans FortiGate-VM and Cisco Meraki (see [Palo Alto VM-Series perimeter](#palo-alto-vm-series-perimeter-opt-in) and Multi-vendor firewall portfolio below).
+
 ## Architecture
 
 ![Architecture](docs/architecture.png)
@@ -190,6 +192,31 @@ Two gotchas surfaced and are now baked into the config:
   `ssh_public_key_path` at it: `ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_vmlab`.
 - **Image generation must match the VM size.** The Gen1 `byol` image will not
   boot on Gen2-only sizes (the `D*_v6/v7` families); use `byol-gen2` there.
+
+### Multi-vendor firewall portfolio
+
+This repo is the Palo Alto anchor of a broader "firewall as code across
+vendors" theme: the same perimeter pattern (a third-party next-generation
+firewall as a network virtual appliance, with the protected route forced through
+its trust interface, and its policy managed as code) built on three vendors,
+each in its natural home:
+
+- **Palo Alto VM-Series** — here. VM-Series in front of the hardened jump host,
+  least-privilege egress policy applied through the official `panos` provider in
+  `terraform-panos/`, validated live (see above).
+- **FortiGate-VM** — an opt-in Fortinet FortiGate-VM hub appliance in
+  [azure-landing-zone](https://github.com/jordann6/azure-landing-zone)
+  (`terraform/firewall.tf`) that forces both landing-zone spokes through its
+  trust interface with user-defined routes.
+- **Cisco Meraki** — a dependency-free, standard-library read-only Meraki
+  Dashboard API client in
+  [devops-automation-suite](https://github.com/jordann6/devops-automation-suite)
+  (`cli_tool/meraki.py`), run against the Cisco DevNet always-on sandbox for
+  fabric inventory.
+
+Together they show the same policy-as-code, least-privilege-egress discipline
+applied across Palo Alto, Fortinet, and Cisco Meraki rather than a single
+vendor.
 
 ## Hardening notes (production deltas)
 
