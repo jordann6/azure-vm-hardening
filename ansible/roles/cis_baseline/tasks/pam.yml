@@ -1,9 +1,8 @@
 ---
 - name: Install pam_pwquality
-  ansible.builtin.apt:
-    name: libpam-pwquality
+  ansible.builtin.package:
+    name: "{{ 'libpam-pwquality' if ansible_facts['os_family'] == 'Debian' else 'libpwquality' }}"
     state: present
-    update_cache: true
 
 - name: Enforce password quality
   ansible.builtin.lineinfile:

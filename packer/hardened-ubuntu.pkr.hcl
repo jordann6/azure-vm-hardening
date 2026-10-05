@@ -18,7 +18,7 @@ variable "subscription_id" {
 
 variable "location" {
   type    = string
-  default = "eastus"
+  default = "centralus"
 }
 
 variable "image_resource_group" {
@@ -32,26 +32,85 @@ variable "image_name" {
   default = "img-hardened-ubuntu-2204"
 }
 
+variable "gallery_name" {
+  type    = string
+  default = ""
+}
+
+variable "gallery_image_name" {
+  type    = string
+  default = "hardened-ubuntu-2204"
+}
+
+variable "image_version" {
+  type    = string
+  default = "1.0.0"
+}
+
+variable "build_resource_group" {
+  type    = string
+  default = ""
+}
+
+variable "keep_managed_image" {
+  type    = bool
+  default = true
+}
+
+variable "ssh_allowed_ip" {
+  type        = string
+  description = "Workstation public /32 allowed to reach the temporary Packer SSH listener."
+}
+
+variable "role_path" {
+  type    = string
+  default = "../ansible/roles"
+}
+
+variable "vm_size" {
+  type    = string
+  default = "Standard_B2s"
+}
+
 source "azure-arm" "ubuntu" {
   # Auth comes from the logged-in Azure CLI, so no secret ever lands in a file.
   use_azure_cli_auth = true
   subscription_id    = var.subscription_id
 
-  managed_image_resource_group_name = var.image_resource_group
-  managed_image_name                = var.image_name
+  managed_image_resource_group_name = var.keep_managed_image ? var.image_resource_group : null
+  managed_image_name                = var.keep_managed_image ? var.image_name : null
+  build_resource_group_name         = var.build_resource_group != "" ? var.build_resource_group : null
+  allowed_inbound_ip_addresses      = [var.ssh_allowed_ip]
+  encryption_at_host                = true
+
+  dynamic "shared_image_gallery_destination" {
+    for_each = var.gallery_name != "" ? [1] : []
+    content {
+      subscription         = var.subscription_id
+      resource_group       = var.image_resource_group
+      gallery_name         = var.gallery_name
+      image_name           = var.gallery_image_name
+      image_version        = var.image_version
+      replication_regions  = [var.location]
+      storage_account_type = "Standard_LRS"
+    }
+  }
 
   os_type         = "Linux"
   image_publisher = "Canonical"
   image_offer     = "0001-com-ubuntu-server-jammy"
   image_sku       = "22_04-lts-gen2"
 
-  location = var.location
-  vm_size  = "Standard_B2s"
+  location = var.build_resource_group == "" ? var.location : null
+  vm_size  = var.vm_size
 
   azure_tags = {
-    project = "vm-hardening"
-    owner   = "jordan"
-    source  = "packer"
+    project             = "vm-hardening"
+    owner               = "jordan"
+    source              = "packer"
+    cost_center         = "platform"
+    environment         = "image-build"
+    data_classification = "internal"
   }
 }
 
@@ -60,9 +119,14 @@ build {
   sources = ["source.azure-arm.ubuntu"]
 
   provisioner "ansible" {
-    playbook_file = "../ansible/site.yml"
-    galaxy_file   = "../ansible/requirements.yml"
-    use_proxy     = false
+    playbook_file    = "../ansible/site.yml"
+    use_proxy        = false
+    ansible_env_vars = ["ANSIBLE_ROLES_PATH=${var.role_path}"]
+  }
+
+  provisioner "shell" {
+    script          = "../scripts/check-hardening.sh"
+    execute_command = "sudo -E bash '{{ .Path }}'"
   }
 
   # Generalize the image so Azure can deploy clean instances from it.
