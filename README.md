@@ -45,6 +45,11 @@ Validate hardening on the live host -> terraform destroy + delete image
 
 Every control is a toggle in `defaults/main.yml`, so the role stays reusable beyond the jump host.
 
+The Ubuntu sysctl baseline removes Apport because its boot service resets
+`fs.suid_dumpable` to `2` after the kernel settings load. Packer reboots the
+hardened build VM and reruns the guest checks before publishing. Local release
+`v2.0.1` contains this fix; management-VM proof remains a separate live check.
+
 ## Z1 landing-zone coupling
 
 By default the repo provisions its own Z1-style hub VNet (10.0.0.0/16) with correctly named and sized reserved subnets (`AzureBastionSubnet`, `snet-management`) so it demos standalone. Set `use_existing_hub = true` to instead drop the jump host into a live [azure-landing-zone](https://github.com/jordann6/azure-landing-zone) hub via Terraform data sources.

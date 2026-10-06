@@ -125,8 +125,16 @@ build {
   }
 
   provisioner "shell" {
-    script          = "../scripts/check-hardening.sh"
-    execute_command = "sudo -E bash '{{ .Path }}'"
+    inline            = ["sudo reboot"]
+    expect_disconnect = true
+  }
+
+  # A boot must preserve the baseline before the image can be published.
+  provisioner "shell" {
+    pause_before        = "30s"
+    start_retry_timeout = "5m"
+    script              = "../scripts/check-hardening.sh"
+    execute_command     = "sudo -E bash '{{ .Path }}'"
   }
 
   # Generalize the image so Azure can deploy clean instances from it.
