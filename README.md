@@ -206,14 +206,14 @@ firewall as a network virtual appliance, with the protected route forced through
 its trust interface, and its policy managed as code) built on three vendors,
 each in its natural home:
 
-- **Palo Alto VM-Series** — here. VM-Series in front of the hardened jump host,
+- **Palo Alto VM-Series**: here. VM-Series in front of the hardened jump host,
   least-privilege egress policy applied through the official `panos` provider in
   `terraform-panos/`, validated live (see above).
-- **FortiGate-VM** — an opt-in Fortinet FortiGate-VM hub appliance in
+- **FortiGate-VM**: an opt-in Fortinet FortiGate-VM hub appliance in
   [azure-landing-zone](https://github.com/jordann6/azure-landing-zone)
   (`terraform/firewall.tf`) that forces both landing-zone spokes through its
   trust interface with user-defined routes.
-- **Cisco Meraki** — a dependency-free, standard-library read-only Meraki
+- **Cisco Meraki**: a dependency-free, standard-library read-only Meraki
   Dashboard API client in
   [devops-automation-suite](https://github.com/jordann6/devops-automation-suite)
   (`cli_tool/meraki.py`), run against the Cisco DevNet always-on sandbox for
