@@ -1,11 +1,24 @@
 ---
 - name: Install auditd
-  ansible.builtin.apt:
-    name:
-      - auditd
-      - audispd-plugins
+  ansible.builtin.package:
+    name: "{{ ['auditd', 'audispd-plugins'] if ansible_facts['os_family'] == 'Debian' else ['audit'] }}"
     state: present
-    update_cache: true
+
+- name: Ensure watched log files exist before loading audit rules
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: touch
+    access_time: preserve
+    modification_time: preserve
+    owner: root
+    group: root
+    mode: "0600"
+  loop:
+    - /var/log/faillog
+    - /var/log/lastlog
+    - /var/log/sudo.log
+    - /var/log/btmp
+    - /var/log/wtmp
 
 - name: Deploy baseline audit rules
   ansible.builtin.template:

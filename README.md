@@ -10,6 +10,12 @@ An opt-in **Palo Alto VM-Series perimeter** adds the network half of defense-in-
 
 ![Architecture](docs/architecture.png)
 
+Top row: the image pipeline. Molecule tests the Ansible role on every push,
+Packer bakes it into an image, reboots the build VM and checks again before
+publishing. Bottom: the jump host boots from that image into a management subnet
+that denies inbound internet, and with the opt-in VM-Series perimeter its default
+route goes through the firewall's trust interface.
+
 ```
 Ansible role (cis_baseline)
   -> tested by Molecule (docker driver: converge, verify, idempotence) in GitHub Actions
@@ -32,6 +38,32 @@ Validate hardening on the live host -> terraform destroy + delete image
 - **Tested before baked.** Molecule converges the role in a container and asserts the result on every push, so a broken control fails CI rather than shipping in an image.
 - **Clean tool boundary.** Terraform provisions cloud resources; Ansible only touches in-OS state. No Ansible reaches into Azure and no Terraform shells into the OS.
 
+## What broke along the way
+
+1. **The image passed every test and still was not hardened after boot.**
+   Molecule converges the role in a container, and a container never boots.
+   On the first real image, Ubuntu's Apport service reset `fs.suid_dumpable`
+   to `2` after the kernel settings loaded, undoing a CIS control. Release
+   `v2.0.1` removes Apport, and Packer now reboots the build VM and reruns the
+   guest checks before it publishes. The corrected image and a fresh management
+   VM in [azure-landing-zone](https://github.com/jordann6/azure-landing-zone)
+   passed all 28 checks after a reboot on 2026-10-05.
+2. **A container is not a VM, part two.** Several early Molecule failures were
+   the container missing things a real Ubuntu host has: `/run/sshd`,
+   `/etc/modprobe.d`, `openssh-server` itself, and the `sshd_config.d`
+   directory. The Molecule prepare step now supplies the first three host pieces,
+   and the role creates `sshd_config.d` before templating into it, which a
+   minimal real host can also lack.
+3. **Azure rejected the SSH key.** The managed-image VM path accepts RSA only
+   and refused `ssh-ed25519` ("Only RSA SSH keys are supported").
+4. **The firewall image would not boot on the chosen size.** The Gen1 VM-Series
+   `byol` image does not run on Gen2-only sizes such as the `D*_v6` and `v7`
+   families; those need `byol-gen2`.
+
+The first one is why the pipeline tests twice: Molecule catches a broken
+control in seconds, and the post-reboot check catches what only a real boot
+reveals.
+
 ## Hardening baseline (`cis_baseline` role)
 
 | Area | Controls |
@@ -44,6 +76,7 @@ Validate hardening on the live host -> terraform destroy + delete image
 | **filesystem** | Unused filesystem modules (cramfs, freevxfs, jffs2, hfs, hfsplus, udf) blacklisted |
 
 Every control is a toggle in `defaults/main.yml`, so the role stays reusable beyond the jump host.
+
 
 ## Z1 landing-zone coupling
 
@@ -185,13 +218,10 @@ VM-Series came up as `Standard_D8as_v7` with all three interfaces
 `0.0.0.0/0 -> 10.0.6.4` (VirtualAppliance, the firewall trust IP), so egress is
 forced through the firewall. Torn down clean afterward.
 
-Two gotchas surfaced and are now baked into the config:
-
-- **SSH key must be RSA.** The managed-image VM path rejects `ssh-ed25519`
-  ("Only RSA SSH keys are supported"). Generate an RSA key and point
-  `ssh_public_key_path` at it: `ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_vmlab`.
-- **Image generation must match the VM size.** The Gen1 `byol` image will not
-  boot on Gen2-only sizes (the `D*_v6/v7` families); use `byol-gen2` there.
+The RSA-key and image-generation gotchas from this run are in
+[What broke along the way](#what-broke-along-the-way). Generate a key with
+`ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_vmlab` and point
+`ssh_public_key_path` at it.
 
 ### Multi-vendor firewall portfolio
 
@@ -201,14 +231,14 @@ firewall as a network virtual appliance, with the protected route forced through
 its trust interface, and its policy managed as code) built on three vendors,
 each in its natural home:
 
-- **Palo Alto VM-Series** — here. VM-Series in front of the hardened jump host,
+- **Palo Alto VM-Series**: here. VM-Series in front of the hardened jump host,
   least-privilege egress policy applied through the official `panos` provider in
   `terraform-panos/`, validated live (see above).
-- **FortiGate-VM** — an opt-in Fortinet FortiGate-VM hub appliance in
+- **FortiGate-VM**: an opt-in Fortinet FortiGate-VM hub appliance in
   [azure-landing-zone](https://github.com/jordann6/azure-landing-zone)
   (`terraform/firewall.tf`) that forces both landing-zone spokes through its
   trust interface with user-defined routes.
-- **Cisco Meraki** — a dependency-free, standard-library read-only Meraki
+- **Cisco Meraki**: a dependency-free, standard-library read-only Meraki
   Dashboard API client in
   [devops-automation-suite](https://github.com/jordann6/devops-automation-suite)
   (`cli_tool/meraki.py`), run against the Cisco DevNet always-on sandbox for

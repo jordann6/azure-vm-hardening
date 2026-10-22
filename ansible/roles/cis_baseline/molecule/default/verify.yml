@@ -5,7 +5,7 @@
   tasks:
     - name: Read hardened sshd config
       ansible.builtin.slurp:
-        src: /etc/ssh/sshd_config.d/60-hardening.conf
+        src: /etc/ssh/sshd_config.d/00-hardening.conf
       register: cis_baseline_sshd_conf
 
     - name: Assert sshd hardening is in place

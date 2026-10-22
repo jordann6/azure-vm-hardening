@@ -6,7 +6,7 @@ Renders docs/architecture.png. Requires the diagrams package and Graphviz:
 """
 
 from diagrams import Diagram, Cluster, Edge
-from diagrams.azure.compute import VMImages, VM
+from diagrams.azure.compute import ImageDefinitions, VMImages, VM
 from diagrams.azure.network import (
     VirtualNetworks,
     NetworkSecurityGroupsClassic,
@@ -16,9 +16,8 @@ from diagrams.azure.network import (
 from diagrams.onprem.network import Internet
 from diagrams.onprem.iac import Ansible, Terraform
 from diagrams.onprem.ci import GithubActions
-from diagrams.programming.framework import Flask  # stand-in icon for Packer
 
-graph_attr = {"fontsize": "20", "bgcolor": "white", "pad": "0.5"}
+graph_attr = {"fontsize": "20", "bgcolor": "white", "pad": "1.0"}
 
 with Diagram(
     "Azure VM Hardening",
@@ -27,11 +26,12 @@ with Diagram(
     direction="LR",
     graph_attr=graph_attr,
 ):
-    ci = GithubActions("Molecule CI\n(converge / verify / idempotence)")
+    ci = GithubActions("Molecule CI\nconverge, verify,\nidempotence")
 
     with Cluster("Image pipeline"):
         role = Ansible("cis_baseline role")
-        packer = Flask("Packer\nazure-arm bake")
+        # The library has no Packer node; Azure Image Definitions stands in for the bake.
+        packer = ImageDefinitions("Packer bake\nreboot + re-verify")
         image = VMImages("img-hardened-ubuntu-2204")
         ci >> Edge(label="tests") >> role
         role >> Edge(label="provisioner") >> packer >> image

@@ -1,4 +1,15 @@
 ---
+- name: Verify supported OS family
+  ansible.builtin.assert:
+    that: ansible_facts['os_family'] in ['Debian', 'RedHat']
+    fail_msg: The baseline supports Debian/Ubuntu and RedHat-family systems including AL2023.
+
+- name: Refresh Debian package metadata
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_facts['os_family'] == 'Debian'
+
 - name: Include sshd hardening
   ansible.builtin.import_tasks: sshd.yml
   when: cis_baseline_harden_sshd
@@ -11,7 +22,7 @@
 
 - name: Include fail2ban hardening
   ansible.builtin.import_tasks: fail2ban.yml
-  when: cis_baseline_harden_fail2ban
+  when: cis_baseline_harden_fail2ban and ansible_facts['os_family'] == 'Debian'
   tags: [fail2ban]
 
 - name: Include sysctl hardening
