@@ -19,7 +19,6 @@ packer_cache/
 .molecule/
 
 # Diagrams
-docs/architecture.png
 
 # OS
 .DS_Store
